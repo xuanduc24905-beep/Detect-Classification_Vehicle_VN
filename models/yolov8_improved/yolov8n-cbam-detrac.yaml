@@ -1,0 +1,50 @@
+# YOLOv8 + CBAM attention chèn vào neck (P3/P4/P5 outputs).
+# Dùng wrapper NeckCBAM (register bởi scripts/train_yolo_improved.py) để tương
+# thích với parse_model của Ultralytics (auto-inject c1, c2).
+# NeckCBAM preserve số kênh (c2==c1) — CBAM chỉ recalibrate feature.
+#
+# Số lớp: 5 (motorcycle, car, bus, truck, bicycle).
+# Scale mặc định 'n' (nhẹ). Đổi qua tên file: yolov8s-cbam.yaml, ...
+
+nc: 4
+
+scales:
+  n: [0.33, 0.25, 1024]
+  s: [0.33, 0.50, 1024]
+  m: [0.67, 0.75, 768]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.25, 512]
+
+backbone:
+  - [-1, 1, Conv,  [64, 3, 2]]    # 0-P1/2
+  - [-1, 1, Conv,  [128, 3, 2]]   # 1-P2/4
+  - [-1, 3, C2f,   [128, True]]   # 2
+  - [-1, 1, Conv,  [256, 3, 2]]   # 3-P3/8
+  - [-1, 6, C2f,   [256, True]]   # 4
+  - [-1, 1, Conv,  [512, 3, 2]]   # 5-P4/16
+  - [-1, 6, C2f,   [512, True]]   # 6
+  - [-1, 1, Conv,  [1024, 3, 2]]  # 7-P5/32
+  - [-1, 3, C2f,   [1024, True]]  # 8
+  - [-1, 1, SPPF,  [1024, 5]]     # 9
+
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 10
+  - [[-1, 6], 1, Concat, [1]]                    # 11
+  - [-1, 3, C2f, [512]]                          # 12
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 13
+  - [[-1, 4], 1, Concat, [1]]                    # 14
+  - [-1, 3, C2f, [256]]                          # 15 (P3 pre-attention)
+  - [-1, 1, NeckCBAM, [256]]                     # 16 (P3 + CBAM)
+
+  - [-1, 1, Conv, [256, 3, 2]]                   # 17
+  - [[-1, 12], 1, Concat, [1]]                   # 18
+  - [-1, 3, C2f, [512]]                          # 19 (P4 pre-attention)
+  - [-1, 1, NeckCBAM, [512]]                     # 20 (P4 + CBAM)
+
+  - [-1, 1, Conv, [512, 3, 2]]                   # 21
+  - [[-1, 9], 1, Concat, [1]]                    # 22
+  - [-1, 3, C2f, [1024]]                         # 23 (P5 pre-attention)
+  - [-1, 1, NeckCBAM, [1024]]                    # 24 (P5 + CBAM)
+
+  - [[16, 20, 24], 1, Detect, [nc]]              # 25

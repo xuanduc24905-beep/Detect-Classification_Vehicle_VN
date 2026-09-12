@@ -1,0 +1,18 @@
+# Vietnamese vehicle detection dataset (YOLO format)
+# Paths are resolved by Ultralytics relative to `path`.
+# After running scripts/prepare_data.py the layout under `processed/` will be:
+#   data/processed/images/{train,val,test}/*.jpg
+#   data/processed/labels/{train,val,test}/*.txt
+
+path: ../data/processed
+train: images/train
+val: images/val
+test: images/test
+
+nc: 5
+names:
+  0: motorcycle
+  1: car
+  2: bus
+  3: truck
+  4: bicycle

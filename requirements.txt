@@ -1,0 +1,12 @@
+# Core dependencies cho đề tài YOLOv8 fine-tune / cải tiến (VN vehicles).
+# Cài torch riêng theo CUDA phù hợp driver — xem README.
+#   pip install --index-url https://download.pytorch.org/whl/cu124 torch==2.5.1 torchvision==0.20.1
+
+ultralytics>=8.4.0
+opencv-python>=4.9.0
+albumentations>=1.4.0
+matplotlib>=3.8.0
+pandas>=2.0.0
+numpy>=1.26,<2.3
+pyyaml>=6.0
+tqdm>=4.66.0
