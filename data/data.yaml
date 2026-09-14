@@ -4,7 +4,7 @@
 #   data/processed/images/{train,val,test}/*.jpg
 #   data/processed/labels/{train,val,test}/*.txt
 
-path: ../data/processed
+path: /home/xuand/yolov8_finetune/data/processed
 train: images/train
 val: images/val
 test: images/test
