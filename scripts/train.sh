@@ -23,12 +23,12 @@ PRETRAINED=weights/yolov8n.pt
 SCALE=n
 EPOCHS=50
 IMGSZ=640
-BATCH=16
-WORKERS=8
-CACHE=ram
+BATCH=32              # RTX 3500 Ada 12GB đủ; nếu OOM giảm về 24
+WORKERS=16            # match số core WSL, saturate data pipeline
+CACHE=disk
 DEVICE=0
-PATIENCE=15
-NAME=exp
+PATIENCE=100          # >EPOCHS => tắt early stop, train hết 50 epoch
+NAME=exp_full
 PROJECT_BASE=runs
 # ============================
 

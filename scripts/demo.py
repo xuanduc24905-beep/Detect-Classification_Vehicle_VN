@@ -16,7 +16,8 @@ import cv2
 from ultralytics import YOLO
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from scripts.train_yolo_improved import register_cbam  # noqa: E402
+from scripts.train_yolo_improved import register_cbam, NeckCBAM  # noqa: E402
+sys.modules["__main__"].NeckCBAM = NeckCBAM  # để unpickle checkpoint improved tìm được class
 
 CLASSES = ["motorcycle", "car", "bus", "truck", "bicycle"]
 COLORS = [(0, 200, 255), (0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]

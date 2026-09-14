@@ -24,9 +24,10 @@ import pandas as pd
 from ultralytics import YOLO
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from scripts.train_yolo_improved import register_cbam  # noqa: E402
+from scripts.train_yolo_improved import register_cbam, NeckCBAM  # noqa: E402
+sys.modules["__main__"].NeckCBAM = NeckCBAM  # để unpickle checkpoint improved tìm được class
 
-CLASSES = ["motorcycle", "car", "bus", "truck", "bicycle"]
+CLASSES = ["motorcycle", "car", "bus", "truck", "bicycle"]  # sẽ được override từ data yaml trong main()
 
 
 def eval_yolo(weights: Path, data_yaml: Path, name: str, project: str = "runs/eval") -> dict:
@@ -163,6 +164,18 @@ def main() -> None:
                    help="Video mẫu để đo FPS (nếu bỏ qua sẽ ghi NaN)")
     p.add_argument("--out-csv", type=Path, default=Path("results/tables/comparison.csv"))
     args = p.parse_args()
+
+    # Đọc CLASSES từ data yaml, không hard-code
+    import yaml
+    global CLASSES
+    with open(args.data_yaml) as fh:
+        dcfg = yaml.safe_load(fh)
+    names = dcfg.get("names", {})
+    if isinstance(names, dict):
+        CLASSES = [names[i] for i in sorted(names.keys())]
+    else:
+        CLASSES = list(names)
+    print(f"[evaluate] Classes ({len(CLASSES)}): {CLASSES}")
 
     register_cbam()
 
