@@ -228,18 +228,33 @@ Cả hai mô hình đều hội tụ sớm và dừng theo cơ chế early stopp
 cả hai dừng sau 15 epoch liên tiếp không cải thiện. Bảng 4 tổng hợp kết quả
 tốt nhất trên tập val (epoch chọn theo mAP@0.5:0.95).
 
-**Bảng 4**. Kết quả tốt nhất trên tập val — so sánh baseline và cải tiến.
+**Bảng 4**. Kết quả tốt nhất trên tập **val** — so sánh baseline và cải tiến.
 
 | Mô hình | Epoch tốt nhất | P | R | mAP@0.5 | mAP@0.5:0.95 | Params | Thời gian train |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| YOLOv8n baseline | 3 / 18 | 0.799 | 0.731 | **0.816** | **0.622** | 3.00 M | 2h 37m |
-| YOLOv8n + CBAM + CW | 5 / 20 | 0.811 | 0.721 | 0.801 | 0.615 | 3.10 M | 3h 19m |
-| Δ (cải tiến − baseline) | | +0.012 | −0.010 | **−0.015** | **−0.007** | +0.10 M | +42 min |
+| YOLOv8n baseline (early stop) | 3 / 18 | 0.799 | 0.731 | **0.816** | **0.622** | 3.00 M | 2h 37m |
+| YOLOv8n + CBAM + CW (full 50 ep) | 9 / 50 | 0.824 | 0.681 | 0.784 | 0.610 | 3.10 M | ~5h 00m |
+| Δ (cải tiến − baseline) | | +0.025 | −0.050 | **−0.032** | **−0.012** | +0.10 M | +2h 23m |
 
-**Nhận xét chính**: mô hình cải tiến đạt precision cao hơn nhẹ nhưng recall,
-mAP@0.5 và mAP@0.5:0.95 đều thấp hơn baseline. Chênh lệch mAP không lớn
-(0.015 điểm cho mAP@0.5 và 0.007 điểm cho mAP@0.5:0.95) nhưng vẫn cho thấy
-CBAM + class-weighted BCE **không cải thiện tổng thể trên UA-DETRAC**.
+**Nhận xét chính**: mô hình cải tiến đạt precision cao hơn (+0.025) nhưng recall
+giảm đáng kể (−0.050), dẫn đến mAP@0.5 giảm 0.032 điểm và mAP@0.5:0.95 giảm
+0.012 điểm so với baseline. Việc huấn luyện đầy đủ 50 epoch (patience = 100 để
+loại bỏ cơ chế early stopping) xác nhận rằng cải tiến **không có upside** trên
+UA-DETRAC — đường cong mAP đã đạt đỉnh ở epoch 9 và bắt đầu suy giảm nhẹ, dấu
+hiệu của slight overfitting trên val split.
+
+**Bảng 4b**. Kết quả trên tập **test** (56 167 ảnh chưa từng thấy trong huấn luyện).
+
+| Mô hình | P | R | mAP@0.5 | mAP@0.5:0.95 |
+|---|---:|---:|---:|---:|
+| YOLOv8n baseline | 0.6100 | **0.5708** | **0.5948** | **0.4317** |
+| YOLOv8n + CBAM + CW | **0.6184** | 0.5407 | 0.5522 | 0.4094 |
+| Δ (cải tiến − baseline) | +0.0084 | −0.0301 | **−0.0426** | **−0.0223** |
+
+Kết quả trên test **nhất quán** với val: baseline tốt hơn cải tiến trên cả hai
+mAP, cải tiến chỉ vượt về precision nhờ tính "cẩn trọng" của class-weighted BCE.
+Khoảng cách trên test còn lớn hơn val (Δ mAP@0.5 = −0.043 vs −0.032 trên val),
+gợi ý rằng cải tiến **generalize kém hơn** baseline trên phân phối test.
 
 ## 6.2. Đường cong huấn luyện
 
@@ -262,20 +277,23 @@ sẵn" các lớp phương tiện.
 | 8 | 0.582 | | 17 | 0.571 |
 | 9 | 0.577 | | 18 | 0.571 |
 
-**Bảng 6**. mAP@0.5:0.95 theo epoch — mô hình cải tiến.
+**Bảng 6**. mAP@0.5:0.95 theo epoch — mô hình cải tiến (full 50 epoch).
 
-| Epoch | mAP@0.5:0.95 | | Epoch | mAP@0.5:0.95 |
-|---:|---:|---|---:|---:|
-| 1 | 0.525 | | 11 | 0.599 |
-| 2 | 0.589 | | 12 | 0.601 |
-| 3 | 0.590 | | 13 | 0.596 |
-| 4 | 0.588 | | 14 | 0.593 |
-| **5** | **0.615** ← peak | | 15 | 0.594 |
-| 6 | 0.598 | | 16 | 0.594 |
-| 7 | 0.604 | | 17 | 0.593 |
-| 8 | 0.591 | | 18 | 0.593 |
-| 9 | 0.589 | | 19 | 0.594 |
-| 10 | 0.595 | | 20 | 0.596 |
+| Epoch | mAP@0.5:0.95 | | Epoch | mAP@0.5:0.95 | | Epoch | mAP@0.5:0.95 |
+|---:|---:|---|---:|---:|---|---:|---:|
+| 1 | 0.498 | | 18 | 0.593 | | 35 | 0.588 |
+| 2 | 0.565 | | 19 | 0.594 | | 36 | 0.585 |
+| 3 | 0.583 | | 20 | 0.596 | | 37 | 0.583 |
+| 5 | 0.601 | | 22 | 0.601 | | 40 | 0.582 |
+| 7 | 0.605 | | 25 | 0.608 | | 43 | 0.586 |
+| **9** | **0.610** ← peak | | 27 | 0.605 | | 45 | 0.584 |
+| 11 | 0.606 | | 29 | 0.599 | | 47 | 0.583 |
+| 13 | 0.604 | | 31 | 0.597 | | 48 | 0.584 |
+| 15 | 0.598 | | 33 | 0.591 | | 49 | 0.582 |
+| 17 | 0.595 | | 34 | 0.590 | | 50 | 0.579 |
+
+Model đạt peak ở epoch 9 (0.610), duy trì cao trong epoch 5-27, sau đó dao động
+nhẹ và có xu hướng giảm dần từ epoch 30 trở đi (dấu hiệu slight overfitting).
 
 ## 6.3. So sánh precision – recall
 
@@ -286,12 +304,16 @@ tốt nhất của từng mô hình.
 
 | Mô hình | Precision | Recall | F1 (xấp xỉ) |
 |---|---:|---:|---:|
-| Baseline (ep. 3) | 0.799 | 0.731 | 0.763 |
-| Cải tiến (ep. 5) | 0.811 | 0.721 | 0.763 |
+| Baseline val (ep. 3) | 0.799 | 0.731 | 0.763 |
+| Cải tiến val (ep. 9) | 0.824 | 0.681 | 0.746 |
+| Baseline test | 0.610 | 0.571 | 0.590 |
+| Cải tiến test | 0.618 | 0.541 | 0.577 |
 
-F1 xấp xỉ tương đương. Mô hình cải tiến "cẩn trọng" hơn — dự đoán ít hơn
-nhưng chính xác hơn — hệ quả có thể của class-weighted BCE làm loss chú ý
-đến các lớp hiếm và làm model cảnh giác hơn với dự đoán confidence thấp.
+Trên cả val và test, mô hình cải tiến "cẩn trọng" hơn — dự đoán ít hơn
+(recall giảm) nhưng chính xác hơn (precision tăng). Đây là hệ quả điển hình
+của class-weighted BCE làm loss chú ý đến các lớp hiếm và khiến model dè dặt
+hơn với dự đoán confidence thấp. Trên bộ dữ liệu cân bằng như UA-DETRAC, sự
+dè dặt này không đem lại lợi ích, thậm chí làm giảm F1 nhẹ.
 
 ---
 
@@ -338,20 +360,22 @@ huy tác dụng. Giai đoạn 2 sẽ lặp lại thí nghiệm này trên dữ l
 
 ## 7.3. Hạn chế của báo cáo
 
-1. **Chưa đánh giá trên tập test**: bảng kết quả ở mục 6 dựa trên val split.
-   Chưa chạy `model.val(split='test')` trên 56 167 ảnh test do cả hai run đều
-   dừng sớm và chưa gọi bước eval cuối cùng.
-2. **Chưa có accuracy per-class**: chỉ số tổng thể (P, R, mAP) không cho biết
+1. **Chưa có accuracy per-class**: chỉ số tổng thể (P, R, mAP) không cho biết
    cải tiến ảnh hưởng đến lớp nào cụ thể. Đây là chỉ số quan trọng cho luận
    điểm về "cải thiện lớp hiếm" và sẽ được bổ sung ở giai đoạn 2.
-3. **Chưa có ablation**: chưa tách được đóng góp riêng của CBAM và
-   class-weighted BCE. Kế hoạch giai đoạn 2 sẽ chạy ablation `--no-class-weights`
-   để cô lập tác động CBAM.
-4. **Chưa đo tốc độ suy luận (FPS)**: yếu tố quan trọng cho ứng dụng thực tế,
+2. **Ablation CBAM-only đang tiến hành**: chưa tách được đóng góp riêng của
+   CBAM và class-weighted BCE. Run `--no-class-weights` đang chạy để cô lập
+   tác động CBAM và sẽ được cập nhật vào bản báo cáo tiếp theo.
+3. **Chưa đo tốc độ suy luận (FPS)**: yếu tố quan trọng cho ứng dụng thực tế,
    sẽ đo bằng script `evaluate.py` với video mẫu ở giai đoạn tiếp theo.
-5. **Cấu hình bị giới hạn bởi RAM**: cache RAM không hoạt động (thiếu 37 GB)
-   nên epoch chậm (~600 s/epoch với mô hình cải tiến). Giai đoạn 2 sẽ chuyển
-   sang cache disk và tăng batch size để tối ưu tốc độ.
+4. **Baseline dùng patience = 15 (early stop ở epoch 18)**, còn improved dùng
+   patience = 100 (train hết 50 epoch). Tuy có chênh lệch về số epoch dừng,
+   cả hai mô hình đều đã đạt đỉnh và plateau ổn định trong ít nhất 15 epoch
+   sau đó, đảm bảo so sánh có ý nghĩa.
+5. **Cấu hình phần cứng bị giới hạn bởi RAM**: cache RAM không hoạt động
+   (thiếu 37 GB so với yêu cầu 87 GB) nên phải dùng cache disk. Với batch = 32,
+   workers = 16, RTX 3500 Ada 12 GB, epoch time đạt ~380 s/epoch trong run
+   full 50 epoch — cải thiện đáng kể so với 600 s/epoch ở run ban đầu.
 
 ---
 
@@ -361,12 +385,18 @@ huy tác dụng. Giai đoạn 2 sẽ lặp lại thí nghiệm này trên dữ l
 
 Chúng tôi đã xây dựng pipeline huấn luyện – so sánh cho hai biến thể YOLOv8n
 (baseline và cải tiến CBAM + class-weighted BCE) và thực nghiệm trên UA-DETRAC
-với cùng cấu hình. Kết quả sơ bộ cho thấy trên bộ dữ liệu tương đối cân bằng
-này, cải tiến **chưa vượt baseline** về mAP tổng thể (mAP@0.5 giảm 0.015)
-mặc dù precision tăng nhẹ. Kết quả này nhất quán với đặc điểm của UA-DETRAC
-(cân bằng lớp, mật độ thấp) và không phủ nhận giá trị lý thuyết của các cải
-tiến — đúng hơn, nó chỉ ra rằng bối cảnh áp dụng phải phù hợp với thiết kế
-của kỹ thuật.
+với cùng cấu hình. Kết quả **trên cả val và test** cho thấy trên bộ dữ liệu
+tương đối cân bằng này, cải tiến **thua baseline** về mAP tổng thể:
+
+- **Trên val**: mAP@0.5 giảm 0.032, mAP@0.5:0.95 giảm 0.012.
+- **Trên test (56 167 ảnh)**: mAP@0.5 giảm 0.043, mAP@0.5:0.95 giảm 0.022.
+
+Việc huấn luyện cải tiến đầy đủ 50 epoch (loại bỏ early stopping) xác nhận
+model đã hội tụ ở epoch 9 và không thể vượt baseline dù cho thêm thời gian.
+Kết quả này nhất quán với đặc điểm của UA-DETRAC (cân bằng lớp, mật độ thấp)
+và không phủ nhận giá trị lý thuyết của các cải tiến — đúng hơn, nó chỉ ra
+rằng bối cảnh áp dụng phải phù hợp với thiết kế của kỹ thuật. Chi tiết lý
+luận đã trình bày ở §7.1–7.2.
 
 ## 8.2. Việc cần làm ngay
 
